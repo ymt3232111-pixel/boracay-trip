@@ -343,7 +343,7 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
           <dt>入住</dt><dd>11/19（四）約 18:00 抵達</dd>
           <dt>退房</dt><dd>11/23（一）11:00 前出發往碼頭</dd>
           <dt>早餐</dt><dd>飯店早餐 ₱1,100 / 人</dd>
-          <dt>附近</dt><dd>Gerry's Grill 走路 3 分鐘、D'Mall 換錢</dd>
+          <dt>附近</dt><dd>Gerry's Grill 走路 3 分鐘、<a href="https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA" target="_blank" rel="noopener">D'Mall 換錢（M Lhuillier）↗</a></dd>
           <dt>備註</dt><dd>飯店好像有房內按摩，泳池邊是否提供待確認</dd>
         </dl>
         <a class="btn" href="https://maps.app.goo.gl/Xnzjo6i4JmqRtdT97" target="_blank" rel="noopener">在地圖上打開</a>
@@ -363,6 +363,7 @@ footer{text-align:center;font-size:13px;color:var(--muted)}
         <span>≈ ₱</span><output id="php" for="usd">5,818</output>
       </div>
       <p>披索 約 1 : 0.55 · 美金 約 1 : 32（換算下來 US$1 ≈ ₱58）。跳島門票、小費都要準備現金。</p>
+      <a class="btn" href="https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA" target="_blank" rel="noopener">換錢：M Lhuillier D'Mall</a>
     </article>
   </div>
 </section>
@@ -382,7 +383,7 @@ const DAYS = [
       {time:"18:00", title:"抵達飯店 Mandarin Bay", desc:"Check-in，換裝出門", links:[M("https://maps.app.goo.gl/Xnzjo6i4JmqRtdT97","飯店地圖")]},
       {time:"晚餐", title:"Gerry's Grill · Station 2", must:true, desc:"烤魷魚必點，人均約 ₱1,200，不用預約", tags:["walk:步行 3 分"],
         links:[M("https://maps.app.goo.gl/X26xDyNTjYRFE1326","地圖"),M("https://www.gerrysgrill.com/US","菜單")]},
-      {time:"晚上", title:"買鞋、買裙子、換錢", tags:["walk:步行"]}
+      {time:"晚上", title:"買鞋、買裙子、換錢", desc:"換錢可以去 D'Mall 的 M Lhuillier", tags:["walk:步行"], links:[M("https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA","換錢地圖")]}
     ]},
   { date:"11/20", wd:"五", title:"跳島＋日落風帆", sub:"兩個都是必濕行程，8:30 前要出門",
     chips:[],
@@ -527,7 +528,7 @@ tick(); setInterval(tick, 1000);
 const TODOS = [
   {id:"etravel", t:"申請 eTravel", s:"入境菲律賓必填，出發前 72 小時內線上註冊", u:"https://philippines-study.tw/etravel/", ul:"註冊教學"},
   {id:"esim", t:"買 e-SIM", s:"Klook 5 天 5G 不限量 NT$384 · Trip.com 5 天 30GB NT$371", u:"https://www.klook.com/zh-TW/activity/151203-philippines-esim-high-speed-internet-qr-code-voucher/", ul:"Klook"},
-  {id:"cash", t:"換錢", s:"披索與美金現金，跳島門票、小費都要用"},
+  {id:"cash", t:"換錢", s:"披索與美金現金，跳島門票、小費都要用。當地可去 D'Mall 的 M Lhuillier", u:"https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA", ul:"換錢地圖"},
   {id:"shuttle", t:"預訂去程機場接駁", s:"KKday 或 Klook，人均約 NT$580"},
   {id:"hop", t:"預訂跳島行程", s:"11/20 09:00，已訂 KKday", done:true},
   {id:"paraw", t:"預訂日落風帆", s:"11/20 17:00，已訂 KKday", done:true},
