@@ -699,8 +699,10 @@ updateTodo();
 
 /* ===== 記帳分帳 ===== */
 /* Google 試算表共用帳本的網址（Apps Script 網頁應用程式 /exec）。留空就只存在這支手機。 */
-const SYNC_URL = "";
+const SYNC_URL = "https://script.google.com/macros/s/AKfycbwFH19svlnEykVdf_cw-NLgBrEj-jx7QrFlOaJNEbJ4VaU7BW1LLhe3Fl0jvEIORZlQ/exec";
 const SHEET = !!SYNC_URL && !(window.claude && typeof window.claude.use === "function");
+const MOVED = !!SYNC_URL && !SHEET;   // 在 Claude 上開啟：記帳改到 GitHub 網址
+const SHARED_URL = "https://ymt3232111-pixel.github.io/boracay-trip/#ledger";
 const $ = id => document.getElementById(id);
 const PEOPLE = [
   {id:"boss", n:"老大", s:"大", c:"var(--coral)"},
@@ -755,7 +757,7 @@ const toTWD = e => e.amount * (e.cur === "TWD" ? 1 : RATES[e.cur]);
 const ntd = n => "NT$" + Math.round(n).toLocaleString("zh-TW");
 const inCur = (a, cur) => CSYM[cur] + (cur === "TWD" ? Math.round(a).toLocaleString("zh-TW") : (Math.round(a * 100) / 100).toLocaleString("zh-TW"));
 const ava = (id, sm) => { const p = PMAP[id]; return `<span class="ava${sm ? " sm" : ""}" style="--c:${p.c}" aria-hidden="true">${p.s}</span>`; };
-const writable = () => ["local","cloud","wait","sheet","sheet-wait","sheet-err"].includes(mode);
+const writable = () => !MOVED && ["local","cloud","wait","sheet","sheet-wait","sheet-err"].includes(mode);
 
 function compute(){
   const paid = {}, owe = {};
@@ -834,6 +836,7 @@ function renderNote(){
   }[mode];
   if (SHEET && outbox.length && mode === "sheet") T[1] = `還有 ${outbox.length} 筆正在上傳⋯`;
   if (SHEET && outbox.length && mode === "sheet-err") T[1] = `連不到共用帳本，有 ${outbox.length} 筆先存在這支手機，連上網路後會自動上傳。`;
+  if (MOVED) { n.className = "mode-note"; n.innerHTML = `<span class="pill" style="background:var(--yellow)">記帳搬家了</span><span>四個人一起記帳請用 <a href="${SHARED_URL}" target="_blank" rel="noopener">GitHub 網址 ↗</a>，這裡只保留舊記錄。</span>`; return; }
   n.className = "mode-note" + (mode === "cloud" || mode === "cloud-ro" || mode === "sheet" ? " cloud" : "");
   n.innerHTML = `<span class="pill">${T[0]}</span><span>${T[1]}</span>` +
     (pending ? `<button type="button" class="mini" id="lgMove">把這支手機的 ${localExp.length} 筆搬進共用帳本</button>` : "");
