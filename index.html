@@ -698,6 +698,9 @@ list.addEventListener("change", e => {
 updateTodo();
 
 /* ===== 記帳分帳 ===== */
+/* Google 試算表共用帳本的網址（Apps Script 網頁應用程式 /exec）。留空就只存在這支手機。 */
+const SYNC_URL = "";
+const SHEET = !!SYNC_URL && !(window.claude && typeof window.claude.use === "function");
 const $ = id => document.getElementById(id);
 const PEOPLE = [
   {id:"boss", n:"老大", s:"大", c:"var(--coral)"},
@@ -745,12 +748,14 @@ let localExp = (LS.get("bory-ledger", []) || []).map(e => e && cleanExp(e.id, e)
 let expenses = localExp;
 let mode = "local";          // local | wait | cloud | cloud-ro | cloud-err
 let ldb = null, editingId = null;
+let serverExp = (LS.get("bory-sheet-cache", []) || []).map(e => e && cleanExp(e.id, e)).filter(Boolean);
+let outbox = Array.isArray(LS.get("bory-outbox", [])) ? LS.get("bory-outbox", []) : [];
 
 const toTWD = e => e.amount * (e.cur === "TWD" ? 1 : RATES[e.cur]);
 const ntd = n => "NT$" + Math.round(n).toLocaleString("zh-TW");
 const inCur = (a, cur) => CSYM[cur] + (cur === "TWD" ? Math.round(a).toLocaleString("zh-TW") : (Math.round(a * 100) / 100).toLocaleString("zh-TW"));
 const ava = (id, sm) => { const p = PMAP[id]; return `<span class="ava${sm ? " sm" : ""}" style="--c:${p.c}" aria-hidden="true">${p.s}</span>`; };
-const writable = () => mode === "local" || mode === "cloud" || mode === "wait";
+const writable = () => ["local","cloud","wait","sheet","sheet-wait","sheet-err"].includes(mode);
 
 function compute(){
   const paid = {}, owe = {};
@@ -816,15 +821,20 @@ function renderLedger(){
 
 function renderNote(){
   const n = $("lgNote");
-  const pending = mode === "cloud" && localExp.length && !LS.get("bory-ledger-moved", false);
+  const pending = (mode === "cloud" || (SHEET && mode === "sheet")) && localExp.length && !LS.get("bory-ledger-moved", false);
   const T = {
     local:     ["沒有連到共用帳本", "這裡記的帳只存在這個瀏覽器。要看共用帳本，請用 Claude 的分享連結打開，並登入 Claude 帳號。"],
     wait:      ["連線中", "正在連到共用帳本，先顯示這支手機上的記錄。"],
     cloud:     ["已同步", "帳本存在雲端，換手機打開也看得到，大家打開這個網址會看到同一本帳。"],
     "cloud-ro":["即時帳本", "只有負責記帳的人可以新增，你看到的是即時更新的帳本。"],
-    "cloud-err":["連不上", "暫時連不到共用帳本，畫面上的資料可能不是最新的。"]
+    "cloud-err":["連不上", "暫時連不到共用帳本，畫面上的資料可能不是最新的。"],
+    sheet:     ["四人共用帳本", "大家用這個網址記帳都會自動同步，大約 15 秒更新一次。"],
+    "sheet-wait":["連線中", "正在讀取共用帳本⋯"],
+    "sheet-err":["暫時離線", "連不到共用帳本。新記錄會先存在這支手機，連上網路後自動上傳。"]
   }[mode];
-  n.className = "mode-note" + (mode === "cloud" || mode === "cloud-ro" ? " cloud" : "");
+  if (SHEET && outbox.length && mode === "sheet") T[1] = `還有 ${outbox.length} 筆正在上傳⋯`;
+  if (SHEET && outbox.length && mode === "sheet-err") T[1] = `連不到共用帳本，有 ${outbox.length} 筆先存在這支手機，連上網路後會自動上傳。`;
+  n.className = "mode-note" + (mode === "cloud" || mode === "cloud-ro" || mode === "sheet" ? " cloud" : "");
   n.innerHTML = `<span class="pill">${T[0]}</span><span>${T[1]}</span>` +
     (pending ? `<button type="button" class="mini" id="lgMove">把這支手機的 ${localExp.length} 筆搬進共用帳本</button>` : "");
 }
@@ -896,12 +906,14 @@ async function cloudWrite(fn){
   }
 }
 async function saveExp(e){
+  if (SHEET) { queueOp({op:"upsert", exp:{id:e.id, ...recOf(e)}}); return true; }
   if (ldb && mode !== "local") return cloudWrite(() => ldb.collection("expenses").doc(e.id).set(recOf(e)));
   const i = localExp.findIndex(x => x.id === e.id);
   if (i >= 0) localExp[i] = e; else localExp.push(e);
   LS.set("bory-ledger", localExp); expenses = localExp; renderLedger(); return true;
 }
 async function deleteExp(id){
+  if (SHEET) { queueOp({op:"delete", id}); return true; }
   if (ldb && mode !== "local") return cloudWrite(() => ldb.collection("expenses").doc(id).delete());
   localExp = localExp.filter(x => x.id !== id);
   LS.set("bory-ledger", localExp); expenses = localExp; renderLedger(); return true;
@@ -971,6 +983,7 @@ async function onRate(){
   const next = cleanRates({USD: parseFloat($("lgRateU").value), PHP: parseFloat($("lgRateP").value)});
   if (next.USD === RATES.USD && next.PHP === RATES.PHP) { syncRateUI(); return; }
   RATES = next; LS.set("bory-rates", RATES);
+  if (SHEET) { queueOp({op:"rates", rates:{PHP: RATES.PHP, USD: RATES.USD}}); syncRateUI(); toast("匯率已更新"); return; }
   if (ldb && mode === "cloud") await cloudWrite(() => ldb.doc("settings/rates").set({PHP: RATES.PHP, USD: RATES.USD}));
   syncRateUI(); renderLedger(); toast("匯率已更新");
 }
@@ -999,6 +1012,7 @@ $("lgImport").addEventListener("click", async () => {
 document.addEventListener("click", async ev => {
   if (!ev.target.closest("#lgMove")) return;
   const btn = ev.target.closest("#lgMove"); btn.disabled = true;
+  if (SHEET) { const have = new Set(expenses.map(e => e.id)); localExp.filter(e => !have.has(e.id)).forEach(e => queueOp({op:"upsert", exp:{id:e.id, ...recOf(e)}})); LS.set("bory-ledger-moved", true); toast("已搬進共用帳本"); renderNote(); return; }
   const have = new Set(expenses.map(e => e.id));
   let ok = true;
   for (const e of localExp) { if (!have.has(e.id)) { ok = await cloudWrite(() => ldb.collection("expenses").doc(e.id).set(recOf(e))); if (!ok) break; } }
@@ -1035,7 +1049,60 @@ function convert(){
 peso.addEventListener("input", convert);
 usd.addEventListener("input", convert);
 
+/* 四人共用帳本（Google 試算表，用 GitHub 網址開啟時） */
+function sheetView(){
+  let list = serverExp.slice();
+  for (const o of outbox) {
+    if (o.op === "upsert") { const e = cleanExp(o.exp.id, o.exp); if (!e) continue; const i = list.findIndex(x => x.id === e.id); if (i >= 0) list[i] = e; else list.push(e); }
+    else if (o.op === "delete") list = list.filter(x => x.id !== o.id);
+  }
+  const pr = [...outbox].reverse().find(o => o.op === "rates");
+  if (pr) RATES = cleanRates(pr.rates);
+  return list;
+}
+function applyServer(d){
+  if (!d || !Array.isArray(d.expenses)) throw new Error("bad response");
+  serverExp = d.expenses.map(e => e && cleanExp(e.id, e)).filter(Boolean);
+  LS.set("bory-sheet-cache", serverExp);
+  if (d.rates) { RATES = cleanRates(d.rates); LS.set("bory-rates", RATES); }
+}
+async function sheetCall(body){
+  const r = await fetch(SYNC_URL, body ? {method:"POST", body: JSON.stringify(body)} : {cache:"no-store"});
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const d = await r.json();
+  if (d && d.error) throw new Error(d.error);
+  return d;
+}
+let flushing = false, retryT = 0;
+async function sync(){
+  if (flushing) return;
+  flushing = true;
+  try {
+    while (outbox.length) { applyServer(await sheetCall(outbox[0])); outbox.shift(); LS.set("bory-outbox", outbox); }
+    applyServer(await sheetCall(null));
+    mode = "sheet";
+  } catch (e) {
+    mode = "sheet-err"; clearTimeout(retryT); retryT = setTimeout(sync, 15000);
+  }
+  flushing = false;
+  expenses = sheetView();
+  if (editingId && !expenses.some(x => x.id === editingId)) resetForm();
+  syncRateUI(); renderLedger();
+  if (outbox.length && mode === "sheet") sync();
+}
+function queueOp(o){
+  outbox.push(o); LS.set("bory-outbox", outbox);
+  expenses = sheetView(); syncRateUI(); renderLedger(); sync();
+}
+if (SHEET) {
+  mode = "sheet-wait"; expenses = sheetView();
+  setInterval(() => { if (!document.hidden) sync(); }, 15000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) sync(); });
+  addEventListener("online", sync);
+}
+
 resetForm(); syncRateUI(); renderLedger();
+if (SHEET) sync();
 
 /* 選單高亮 */
 const navLinks = [...document.querySelectorAll(".nav a")];
