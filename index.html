@@ -720,7 +720,7 @@ const CATS = [
   {id:"other", l:"其他", g:"雜", c:"var(--paper)"}
 ];
 const CMAP = Object.fromEntries(CATS.map(c => [c.id, c]));
-const DEFAULT_RATES = {PHP:0.55, USD:32};
+const DEFAULT_RATES = {PHP:0.55, USD:33};
 
 const LS = {
   get(k, d){ try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
@@ -818,7 +818,7 @@ function renderNote(){
   const n = $("lgNote");
   const pending = mode === "cloud" && localExp.length && !LS.get("bory-ledger-moved", false);
   const T = {
-    local:     ["只存在這支手機", "建議由一個人負責記帳，結算後複製貼到 LINE 群組。"],
+    local:     ["沒有連到共用帳本", "這裡記的帳只存在這個瀏覽器。要看共用帳本，請用 Claude 的分享連結打開，並登入 Claude 帳號。"],
     wait:      ["連線中", "正在連到共用帳本，先顯示這支手機上的記錄。"],
     cloud:     ["已同步", "帳本存在雲端，換手機打開也看得到，大家打開這個網址會看到同一本帳。"],
     "cloud-ro":["即時帳本", "只有負責記帳的人可以新增，你看到的是即時更新的帳本。"],
