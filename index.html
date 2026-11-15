@@ -143,6 +143,12 @@ section{scroll-margin-top:calc(var(--nav-h) + 16px + env(safe-area-inset-top,0px
 .money p{margin:0;font-size:14px;color:var(--muted)}
 footer{text-align:center;font-size:13px;color:var(--muted)}
 
+.voucher{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;text-decoration:none;background:var(--yellow-soft);border:2px dashed var(--ink);border-radius:12px;padding:6px 12px;font-size:14px}
+.voucher:hover{background:var(--yellow)}
+.voucher .v-l{background:var(--yellow);border:2px solid var(--ink);border-radius:8px;padding:0 8px;font-size:13px}
+.voucher .v-no{font-variant-numeric:tabular-nums;letter-spacing:.03em}
+.voucher .v-go{margin-left:auto;border-bottom:2px solid var(--water)}
+
 /* 記帳分帳 */
 .ledger{display:grid;gap:16px}
 .mode-note{margin:0;font-size:14px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
@@ -368,7 +374,7 @@ textarea.inp{min-height:84px;font-size:12.5px;resize:vertical;font-family:ui-mon
         <div class="mid"><svg width="34" height="24" viewBox="0 0 34 24" aria-hidden="true"><path d="M3 13 L24 7 q6-2 7 1 q1 3-5 4 L8 18 Z" fill="#F6D27A" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/><path d="M13 10 L10 2 h4 l7 6z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="2.5" stroke-linejoin="round"/></svg></div>
         <div class="end"><div class="code">TPE</div><div class="t">20:55</div><div class="city">桃園機場</div></div>
       </div>
-      <div class="dur">飛行約 5 小時 15 分 · 11:00 要從飯店出發</div>
+      <div class="dur">飛行約 5 小時 15 分 · 11:30 在飯店搭接駁</div>
     </article>
   </div>
 </section>
@@ -478,7 +484,7 @@ textarea.inp{min-height:84px;font-size:12.5px;resize:vertical;font-family:ui-mon
         <div><div class="eyebrow">STATION 2 · 4 晚</div><h3>Mandarin Bay Resort &amp; Spa</h3></div>
         <dl class="kv">
           <dt>入住</dt><dd>11/19（四）約 18:00 抵達</dd>
-          <dt>退房</dt><dd>11/23（一）11:00 前出發往碼頭</dd>
+          <dt>退房</dt><dd>11/23（一）11:30 在飯店門口搭接駁去機場</dd>
           <dt>早餐</dt><dd>飯店早餐 ₱1,100 / 人</dd>
           <dt>附近</dt><dd>Gerry's Grill 走路 3 分鐘、<a href="https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA" target="_blank" rel="noopener">D'Mall 換錢（M Lhuillier）↗</a></dd>
           <dt>備註</dt><dd>飯店好像有房內按摩，泳池邊是否提供待確認</dd>
@@ -516,26 +522,29 @@ const DAYS = [
     items:[
       {time:"07:00", title:"桃園機場集合", desc:"掛行李、吃早餐", tags:["shuttle:前往桃機"]},
       {time:"10:10", title:"TPE 起飛 → 15:50 抵達 MPH", tags:["plane:飛機"]},
-      {time:"17:00", title:"出機場搭接駁到長灘島", desc:"KKday 或 Klook 預訂，人均約 NT$580", tags:["shuttle:接駁車","boat:渡船"]},
+      {time:"17:00", title:"出機場搭接駁到長灘島", must:true, desc:"已訂 KKday：Island Star Express 拼車接送，機場 → Mandarin Bay，4 位成人。接送時間依航班抵達時間安排，業者會在前一天聯絡（+63 917 518 5259）。", tags:["shuttle:接駁車","boat:渡船"],
+        warn:"要帶：憑證＋護照正本。到機場出示憑證給 Island Star Express 的服務人員。行李搬運費另計。", voucher:{f:"vouchers/1119-airport-to-hotel.pdf", no:"26KK222404611"}},
       {time:"18:00", title:"抵達飯店 Mandarin Bay", desc:"Check-in，換裝出門", links:[M("https://maps.app.goo.gl/Xnzjo6i4JmqRtdT97","飯店地圖")]},
       {time:"晚餐", title:"Gerry's Grill · Station 2", must:true, desc:"烤魷魚必點，人均約 ₱1,200，不用預約", tags:["walk:步行 3 分"],
         links:[M("https://maps.app.goo.gl/X26xDyNTjYRFE1326","地圖"),M("https://www.gerrysgrill.com/US","菜單")]},
       {time:"晚上", title:"買鞋、買裙子、換錢", desc:"換錢可以去 D'Mall 的 M Lhuillier", tags:["walk:步行"], links:[M("https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA","換錢地圖")]}
     ]},
-  { date:"11/20", wd:"五", title:"跳島＋日落風帆", sub:"兩個都是必濕行程，8:30 前要出門",
+  { date:"11/20", wd:"五", title:"跳島＋日落風帆", sub:"兩個都是必濕行程，9:00 前要出門",
     chips:[],
     items:[
       {time:"早餐", title:"飯店早餐", desc:"₱1,100 / 人"},
-      {time:"08:30", title:"出門前往 Astoria Boracay", desc:"最好 8:45 前到集合點", tags:["walk:步行 15 分","tutu:或搭 Tutu"],
+      {time:"09:00", title:"出門前往 Astoria Boracay", desc:"09:30 集合，最好 09:15 前到集合點", tags:["walk:步行 15 分","tutu:或搭 Tutu"],
         links:[M("https://maps.app.goo.gl/QUjbcL5TtcX8EWFR6","集合點地圖")]},
-      {time:"09:00", title:"跳島行程（約 4 小時）", must:true, tags:["boat:船"],
-        list:["已訂 KKday（NT$458 / 人），午餐行程內附","水晶洞 ₱300 · 魔幻島 ₱250 · 浮潛 ₱100"],
+      {time:"09:30", title:"跳島行程（約 4 小時）", must:true, tags:["boat:船"],
+        list:["已訂 KKday 拼團，4 位成人，午餐行程內附","集合點：Station 1 阿斯托利亞飯店海濱，導遊會拿 KKday 或 I Love Pilipinas 的旗子","水晶洞 ₱300 · 魔幻島 ₱250 · 浮潛 ₱100","業者電話 +63 969 101 0271"],
+        voucher:{f:"vouchers/1120-island-hopping.pdf", no:"26KK254734033"},
         warn:"要帶：現金、水、毛巾、浮潛管、防曬、替換衣物",
         links:[M("https://www.kkday.com/zh-tw/product/123577","KKday 行程")]},
       {time:"14:00", title:"行程結束，回飯店梳洗", tags:["walk:步行","tutu:Tutu"]},
       {time:"16:30", title:"再到 Astoria 報到", desc:"私人包船，須提前 30 分鐘到場", tags:["walk:步行 15 分","tutu:或搭 Tutu"]},
       {time:"17:00", title:"日落風帆 Paraw Sailing", must:true, tags:["boat:風帆船"],
-        list:["已訂 KKday（NT$2,094 / 人）","不確定有沒有含 Insta360"],
+        list:["已訂 KKday 私人包船，日落航行 30 分鐘，4 人","集合點：Station 1 Astoria 海濱","不確定有沒有含 Insta360","業者電話 +63 917 869 7776"],
+        voucher:{f:"vouchers/1120-paraw-sailing.pdf", no:"26KK256734993"},
         warn:"輕便出行＋毛巾，建議泳衣＋罩衫，帶現金給拍美照的小費",
         links:[M("https://www.kkday.com/zh-tw/product/12239","KKday 行程")]},
       {time:"18:30", title:"回飯店整理一下"},
@@ -577,11 +586,12 @@ const DAYS = [
         links:[M("https://maps.app.goo.gl/WhwKURxvhNzTACC69","Coco Mama"),M("https://maps.app.goo.gl/AHFpW3dCor8wfXpw7","ICE FLAKES")]},
       {time:"酒吧", title:"路上看到喜歡的就進去", tags:["walk:步行"]}
     ]},
-  { date:"11/23", wd:"一", title:"回家 MPH → TPE", sub:"前一天晚上決定接駁訂飯店的還是平台的",
+  { date:"11/23", wd:"一", title:"回家 MPH → TPE", sub:"11:30 在飯店門口搭接駁去機場",
     chips:[],
     items:[
       {time:"早餐", title:"飯店早餐", desc:"或去前一天沒選的那間 brunch"},
-      {time:"11:00", title:"從飯店出發前往碼頭", desc:"一定要準時出發", tags:["shuttle:接駁車","boat:渡船"]},
+      {time:"11:30", title:"飯店門口搭接駁去機場", must:true, desc:"已訂 KKday：Island Star Express，Mandarin Bay → 卡提克蘭機場，4 位成人。在飯店上車，請先退房準時集合。", tags:["shuttle:接駁車","boat:渡船"],
+        warn:"要帶：憑證＋護照正本。行李搬運費另計。業者電話 +63 917 518 5259", voucher:{f:"vouchers/1123-hotel-to-airport.pdf", no:"26KK225404751"}},
       {time:"午餐", title:"在機場解決"},
       {time:"15:40", title:"MPH 起飛 → 20:55 抵達 TPE", tags:["plane:飛機"]},
       {time:"22:00", title:"出桃機", desc:"看高鐵班次，或一起包車", tags:["shuttle:高鐵 / 包車"]}
@@ -628,6 +638,7 @@ function showDay(i, save){
           ${it.desc ? `<p>${esc(it.desc)}</p>` : ""}
           ${it.list ? `<ul>${it.list.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
           ${it.warn ? `<div class="warn">${esc(it.warn)}</div>` : ""}
+          ${it.voucher ? `<a class="voucher" href="${esc(it.voucher.f)}" target="_blank" rel="noopener"><span class="v-l">KKday 憑證</span><span class="v-no">${esc(it.voucher.no)}</span><span class="v-go">打開 PDF ↗</span></a>` : ""}
           ${it.links ? `<div class="links">${it.links.map(l => `<a href="${esc(l.u)}" target="_blank" rel="noopener">${esc(l.t)} ↗</a>`).join("")}</div>` : ""}
         </div>
       </li>`).join("")}
@@ -666,14 +677,15 @@ const TODOS = [
   {id:"etravel", t:"申請 eTravel", s:"入境菲律賓必填，出發前 72 小時內線上註冊", u:"https://philippines-study.tw/etravel/", ul:"註冊教學"},
   {id:"esim", t:"買 e-SIM", s:"Klook 5 天 5G 不限量 NT$384 · Trip.com 5 天 30GB NT$371", u:"https://www.klook.com/zh-TW/activity/151203-philippines-esim-high-speed-internet-qr-code-voucher/", ul:"Klook"},
   {id:"cash", t:"換錢", s:"披索與美金現金，跳島門票、小費都要用。當地可去 D'Mall 的 M Lhuillier", u:"https://maps.app.goo.gl/JuiAaMWtdJAgCRrUA", ul:"換錢地圖"},
-  {id:"shuttle", t:"預訂去程機場接駁", s:"KKday 或 Klook，人均約 NT$580"},
-  {id:"hop", t:"預訂跳島行程", s:"11/20 09:00，已訂 KKday", done:true},
+  {id:"shuttle", t:"預訂去程機場接駁", s:"11/19 機場 → 飯店，已訂 KKday", done:true},
+  {id:"hop", t:"預訂跳島行程", s:"11/20 09:30，已訂 KKday", done:true},
   {id:"paraw", t:"預訂日落風帆", s:"11/20 17:00，已訂 KKday", done:true},
   {id:"redco", t:"Red Coconut 訂位", s:"11/21 晚餐，落地後打電話試試"},
   {id:"dos", t:"Dos Mestizos 訂位", s:"11/22 18:00 已訂好", done:true},
   {id:"wet", t:"打包必濕行程用品", s:"毛巾、浮潛管、防曬、泳衣＋罩衫、替換衣物"},
   {id:"white", t:"準備白色穿搭", s:"11/21 Dress code"},
-  {id:"back", t:"決定回程接駁", s:"11/22 晚上決定訂飯店的還是平台的"}
+  {id:"back", t:"預訂回程接駁", s:"11/23 11:30 飯店 → 機場，已訂 KKday", done:true},
+  {id:"passport", t:"帶護照正本", s:"機場接駁上車要出示憑證和護照正本"}
 ];
 let state = {};
 try { state = JSON.parse(localStorage.getItem("bory-todo") || "{}") || {}; } catch(e){ state = {}; }
