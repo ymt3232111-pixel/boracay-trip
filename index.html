@@ -457,7 +457,7 @@ textarea.inp{min-height:84px;font-size:12.5px;resize:vertical;font-family:ui-mon
     出發前待辦
   </h2>
   <div class="card todo">
-    <div class="todo-progress"><span id="todoCount">0 / 0</span><div class="bar" aria-hidden="true"><i id="todoBar" style="width:0"></i></div></div>
+    <div class="todo-progress"><span class="pill" id="todoSync" style="background:var(--green);font-size:12.5px" hidden>四人共用</span><span id="todoCount">0 / 0</span><div class="bar" aria-hidden="true"><i id="todoBar" style="width:0"></i></div></div>
     <div id="todoList"></div>
   </div>
 </section>
@@ -702,11 +702,21 @@ function updateTodo(){
 }
 list.addEventListener("change", e => {
   if (e.target.matches("input")) {
-    state[e.target.dataset.id] = e.target.checked;
+    const id = e.target.dataset.id, on = e.target.checked;
+    state[id] = on;
     try { localStorage.setItem("bory-todo", JSON.stringify(state)); } catch(err){}
     updateTodo();
+    if (SHEET) queueOp({op:"todo", id, done:on});
   }
 });
+function applyTodos(t){
+  for (const x of TODOS) {
+    const box = document.getElementById("todo-" + x.id);
+    const on = (x.id in t) ? !!t[x.id] : !!x.done;
+    if (box && box.checked !== on) box.checked = on;
+  }
+  updateTodo();
+}
 updateTodo();
 
 /* ===== 記帳分帳 ===== */
@@ -763,6 +773,7 @@ let expenses = localExp;
 let mode = "local";          // local | wait | cloud | cloud-ro | cloud-err
 let ldb = null, editingId = null;
 let serverExp = (LS.get("bory-sheet-cache", []) || []).map(e => e && cleanExp(e.id, e)).filter(Boolean);
+let serverTodos = null;
 let outbox = Array.isArray(LS.get("bory-outbox", [])) ? LS.get("bory-outbox", []) : [];
 
 const toTWD = e => e.amount * (e.cur === "TWD" ? 1 : RATES[e.cur]);
@@ -1080,6 +1091,17 @@ function applyServer(d){
   serverExp = d.expenses.map(e => e && cleanExp(e.id, e)).filter(Boolean);
   LS.set("bory-sheet-cache", serverExp);
   if (d.rates) { RATES = cleanRates(d.rates); LS.set("bory-rates", RATES); }
+  if (d.todos && typeof d.todos === "object" && !Array.isArray(d.todos)) {
+    serverTodos = {};
+    for (const x of TODOS) if (x.id in d.todos) serverTodos[x.id] = !!d.todos[x.id];
+  }
+}
+function showTodos(){
+  if (!serverTodos) return;
+  const t = {...serverTodos};
+  for (const o of outbox) if (o.op === "todo") t[o.id] = !!o.done;
+  applyTodos(t);
+  $("todoSync").hidden = false;
 }
 async function sheetCall(body){
   const r = await fetch(SYNC_URL, body ? {method:"POST", body: JSON.stringify(body)} : {cache:"no-store"});
@@ -1100,6 +1122,12 @@ async function sync(){
     mode = "sheet-err"; clearTimeout(retryT); retryT = setTimeout(sync, 15000);
   }
   flushing = false;
+  if (serverTodos && !Object.keys(serverTodos).length && Object.keys(state).length && !LS.get("bory-todo-moved", false)) {
+    LS.set("bory-todo-moved", true);
+    for (const id of Object.keys(state)) if (TODOS.some(x => x.id === id)) outbox.push({op:"todo", id, done: !!state[id]});
+    LS.set("bory-outbox", outbox);
+  }
+  showTodos();
   expenses = sheetView();
   if (editingId && !expenses.some(x => x.id === editingId)) resetForm();
   syncRateUI(); renderLedger();
@@ -1107,6 +1135,7 @@ async function sync(){
 }
 function queueOp(o){
   outbox.push(o); LS.set("bory-outbox", outbox);
+  showTodos();
   expenses = sheetView(); syncRateUI(); renderLedger(); sync();
 }
 if (SHEET) {

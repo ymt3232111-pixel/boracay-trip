@@ -1,4 +1,4 @@
-// 長灘島記帳：四人共用帳本（貼到 Google 試算表的 Apps Script）
+// 長灘島：四人共用帳本＋待辦清單（貼到 Google 試算表的 Apps Script）
 const HEAD = ['id', 'name', 'amount', 'cur', 'payer', 'split', 'day', 'cat', 'ts'];
 
 function sheet_() {
@@ -15,8 +15,10 @@ function state_() {
     payer: String(r[4]), split: String(r[5]).split(',').filter(Boolean),
     day: String(r[6]), cat: String(r[7]), ts: Number(r[8])
   }));
-  const saved = PropertiesService.getScriptProperties().getProperty('rates');
-  return { expenses, rates: saved ? JSON.parse(saved) : { PHP: 0.55, USD: 33 } };
+  const props = PropertiesService.getScriptProperties();
+  const saved = props.getProperty('rates');
+  const todos = JSON.parse(props.getProperty('todos') || '{}');
+  return { expenses, rates: saved ? JSON.parse(saved) : { PHP: 0.55, USD: 33 }, todos };
 }
 
 function text_(v) {
@@ -49,6 +51,11 @@ function doPost(e) {
     } else if (req.op === 'delete') {
       const i = ids.indexOf(String(req.id));
       if (i > 0) s.deleteRow(i + 1);
+    } else if (req.op === 'todo') {
+      const props = PropertiesService.getScriptProperties();
+      const todos = JSON.parse(props.getProperty('todos') || '{}');
+      todos[String(req.id)] = !!req.done;
+      props.setProperty('todos', JSON.stringify(todos));
     } else if (req.op === 'rates') {
       PropertiesService.getScriptProperties().setProperty('rates',
         JSON.stringify({ PHP: Number(req.rates.PHP), USD: Number(req.rates.USD) }));
